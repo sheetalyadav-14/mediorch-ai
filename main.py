@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from google.cloud import firestore
 
-db = firestore.Client(project="watchful-lotus-491814-io")
+db = firestore.Client()
 app = FastAPI()
 
 # ------------------ INPUT MODEL ------------------
