@@ -1,4 +1,4 @@
 fastapi
 uvicorn
 google-cloud-firestore
-google-generativeai>=0.7.0S
+google-generativeai>=0.7.0
