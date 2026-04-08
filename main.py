@@ -1,14 +1,18 @@
 import os
-from google 
-import genai
+import google.generativeai as genai
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+try:
+    model = genai.GenerativeModel("gemini-1.5-pro")
+except Exception as e:
+    print("Gemini init error:", e)
+    model = None
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 from google.cloud import firestore
 
-db = firestore.Client()
+db = firestore.client()
 app = FastAPI()
 
 # ------------------ INPUT MODEL ------------------
@@ -43,60 +47,67 @@ def general_agent(message):
 # ------------------ MAIN AGENT ------------------
 
 def symptom_agent(message):
-    prompt = f"""
-    Analyze these symptoms: {message}.
-    Explain in simple language.
-    Possible causes only (no diagnosis).
-    """
-   response = client.models.generate_content(
-    model="gemini-1.5-flash",
-    contents=prompt
-   )
-    return response.text
+    if not model:
+        return "AI service temporarily unavailable"
+    try:
+        response = model.generate_content(f"Analyze symptoms: {message}")
+        return response.text if hasattr(response, "text") else str(response)
+    except Exception as e:
+        return "Error analyzing symptoms"
 
 
 def advice_agent(message):
-    prompt = f"""
-    Give basic health advice for: {message}.
-    Keep it simple and safe.
-    Do not prescribe medicines.
-    """
-    response = client.models.generate_content(
-    model="gemini-1.5-flash",
-    contents=prompt
-   )
-    return response.text
+    if not model:
+        return "AI service temporarily unavailable"
+    try:
+        prompt = f"""
+Give basic health advice for: {message}.
+Keep it simple and safe.
+Do not prescribe medicines.
+"""
+        response = model.generate_content(prompt)
+        return response.text if hasattr(response, "text") else str(response)
+    except Exception:
+        return "Error generating advice"
 
 
 def risk_agent(message):
-    prompt = f"""
-    Check risk level for: {message}.
-    Answer ONLY one word:
-    LOW or MEDIUM or HIGH
-    """
-    response = client.models.generate_content(
-    model="gemini-1.5-flash",
-    contents=prompt
-   )
-    return response.text
+    if not model:
+        return "Unknown"
+    try:
+        prompt = f"""
+Check risk level for: {message}.
+Answer ONLY one word:
+LOW or MEDIUM or HIGH
+"""
+        response = model.generate_content(prompt)
+        return response.text if hasattr(response, "text") else str(response)
+    except Exception:
+        return "Unknown"
 
 def main_agent(message):
     try:
+        # ⚡ Fast rule-based first
+        basic = health_agent(message) or vaccine_agent(message)
+
+        if basic:
+            return basic
+
+        # 🤖 AI fallback
         symptom = symptom_agent(message)
         advice = advice_agent(message)
         risk = risk_agent(message)
 
         return f"""
 Analysis:
-{symptom}
+{symptom or "Not available"}
 
 Advice:
-{advice}
+{advice or "Not available"}
 
 Risk Level:
-{risk}
+{risk or "Unknown"}
 """
-
     except Exception as e:
         return str(e)
 
