@@ -59,15 +59,25 @@ def home():
 
 @app.post("/chat")
 def chat(query: Query):
-    response = main_agent(query.message)
+    try:
+        print("Incoming request:", query)
 
-    # 🔥 Save to Firestore
-    db.collection("users").document(query.user_id).collection("history").add({
-        "message": query.message,
-        "response": response
-    })
+        response = main_agent(query.message)
 
-    return {"response": response}
+        print("Response generated:", response)
+
+        db.collection("users").document(query.user_id).collection("history").add({
+            "message": query.message,
+            "response": response
+        })
+
+        print("Data saved to Firestore")
+
+        return {"response": response}
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return {"error": str(e)}
 
 
 # ------------------ RUN ------------------
