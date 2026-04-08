@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from google.cloud import firestore
 
+db = firestore.Client()
 app = FastAPI()
 
 # ------------------ INPUT MODEL ------------------
@@ -52,12 +54,19 @@ def main_agent(message):
 
 @app.get("/")
 def home():
-    return {"message": "MediOrch AI is running 🚀"}
+    return {"message": "MediOrch AI is running"}
 
 
 @app.post("/chat")
 def chat(query: Query):
     response = main_agent(query.message)
+
+    # 🔥 Save to Firestore
+    db.collection("users").document(query.user_id).collection("history").add({
+        "message": query.message,
+        "response": response
+    })
+
     return {"response": response}
 
 
