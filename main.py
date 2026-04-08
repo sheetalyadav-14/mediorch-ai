@@ -1,3 +1,9 @@
+import os
+import google.generativeai as genai
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-pro")
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from google.cloud import firestore
@@ -36,18 +42,12 @@ def general_agent(message):
 
 # ------------------ MAIN AGENT ------------------
 
-def main_agent(message):
-    message = message.lower()
-
-    # Decide which agent to call
-    if "fever" in message or "cold" in message:
-        return health_agent(message)
-
-    elif "vaccine" in message:
-        return vaccine_agent(message)
-
-    else:
-        return general_agent(message)
+def main_agent(user_message):
+    try:
+        response = model.generate_content(user_message)
+        return response.text
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 # ------------------ API ------------------
@@ -71,7 +71,7 @@ def chat(query: Query):
 
     except Exception as e:
         return {"error": str(e)}
-
+        
 # ------------------ RUN ------------------
 
 if __name__ == "__main__":
