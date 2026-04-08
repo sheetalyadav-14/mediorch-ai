@@ -3,31 +3,66 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+# ------------------ INPUT MODEL ------------------
 class Query(BaseModel):
     user_id: str
     message: str
 
+
+# ------------------ AGENTS ------------------
+
+# 🧠 Health Agent
+def health_agent(message):
+    if "fever" in message:
+        return "You may have mild fever. Stay hydrated and take rest."
+    if "cold" in message:
+        return "It looks like a common cold. Drink warm fluids."
+    return None
+
+
+# 💉 Vaccine Agent
+def vaccine_agent(message):
+    if "vaccine" in message:
+        return "Your next vaccine is on 12 April."
+    return None
+
+
+# 🤖 General Agent
+def general_agent(message):
+    return "Please ask something related to health."
+
+
+# ------------------ MAIN AGENT ------------------
+
+def main_agent(message):
+    message = message.lower()
+
+    # Decide which agent to call
+    if "fever" in message or "cold" in message:
+        return health_agent(message)
+
+    elif "vaccine" in message:
+        return vaccine_agent(message)
+
+    else:
+        return general_agent(message)
+
+
+# ------------------ API ------------------
+
 @app.get("/")
 def home():
-    return {"message": "MediOrch AI is running"}
+    return {"message": "MediOrch AI is running 🚀"}
+
 
 @app.post("/chat")
 def chat(query: Query):
-    user_msg = query.message.lower()
+    response = main_agent(query.message)
+    return {"response": response}
 
-    response = []
 
-    if "fever" in user_msg or "bukhar" in user_msg:
-        response.append("You may have mild fever. Please take rest.")
+# ------------------ RUN ------------------
 
-    if "vaccine" in user_msg:
-        response.append("Your next vaccine is on 12 April.")
-
-    if not response:
-        return {"response": "Please ask something related to health."}
-
-    return {"response": " | ".join(response)}
-
-    if __name__ == "__main__":
-        import uvicorn
-        uvicorn.run("main:app", host="0.0.0.0", port=8080)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8080)
