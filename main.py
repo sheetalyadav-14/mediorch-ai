@@ -2,17 +2,17 @@ import os
 import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = None
 try:
     model = genai.GenerativeModel("gemini-1.5-pro")
 except Exception as e:
     print("Gemini init error:", e)
-    model = None
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 from google.cloud import firestore
 
-db = firestore.client()
+db = firestore.Client()
 app = FastAPI()
 
 # ------------------ INPUT MODEL ------------------
