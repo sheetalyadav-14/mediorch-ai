@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from google.cloud import firestore
 
-db = firestore.Client()
+db = firestore.Client(project="watchful-lotus-491814-io")
 app = FastAPI()
 
 # ------------------ INPUT MODEL ------------------
@@ -60,25 +60,17 @@ def home():
 @app.post("/chat")
 def chat(query: Query):
     try:
-        print("Incoming request:", query)
-
         response = main_agent(query.message)
-
-        print("Response generated:", response)
 
         db.collection("users").document(query.user_id).collection("history").add({
             "message": query.message,
             "response": response
         })
 
-        print("Data saved to Firestore")
-
         return {"response": response}
 
     except Exception as e:
-        print("ERROR:", str(e))
         return {"error": str(e)}
-
 
 # ------------------ RUN ------------------
 
