@@ -3,7 +3,7 @@ import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
+model = genai.GenerativeModel("models/gemini-1.5-flash")
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -49,7 +49,10 @@ def symptom_agent(message):
     Explain in simple language.
     Possible causes only (no diagnosis).
     """
-    response = model.generate_content(prompt)
+    response = model.generate_content(
+    prompt,
+    generation_config={"temperature": 0.7}
+)
     return response.text if hasattr(response, "text") else str(response)
 
 
@@ -59,7 +62,10 @@ def advice_agent(message):
     Keep it simple and safe.
     Do not prescribe medicines.
     """
-    response = model.generate_content(prompt)
+    response = model.generate_content(
+    prompt,
+    generation_config={"temperature": 0.7}
+)
     return response.text if hasattr(response, "text") else str(response)
 
 
@@ -69,7 +75,10 @@ def risk_agent(message):
     Answer ONLY one word:
     LOW or MEDIUM or HIGH
     """
-    response = model.generate_content(prompt)
+    response = model.generate_content(
+    prompt,
+    generation_config={"temperature": 0.7}
+)
     return response.text if hasattr(response, "text") else str(response)
 
 
